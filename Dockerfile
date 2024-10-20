@@ -1,6 +1,27 @@
 
+# Cloudflare WARP
+FROM debian:stable-slim AS cloudflare-warp
+
+# download the cloudflare-warp deb package
+RUN \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y curl ca-certificates gnupg lsb-release && \
+    \
+    curl https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/cloudflare-client.list && \
+    \
+    mkdir -p /tmp/cloudflare-warp && cd /tmp/cloudflare-warp && \
+    \
+    apt-get update && \
+    apt show cloudflare-warp && \
+    apt-get download --print-uris cloudflare-warp && \
+    apt-get download cloudflare-warp || true && \
+    mv cloudflare-warp_*.deb cloudflare-warp.deb
+
+
 # https://hub.docker.com/r/syncthing/syncthing/tags
-FROM syncthing/syncthing:latest AS syncthing
+FROM syncthing/syncthing:1.28 AS syncthing
 
 RUN \
    /bin/syncthing --version
@@ -15,33 +36,31 @@ LABEL source="https://github.com/threatpatrols/docker-cfwarp-syncthing"
 
 # copy-install syncthing binary
 COPY --from=syncthing /bin/syncthing /usr/local/bin/syncthing
+COPY --from=cloudflare-warp /tmp/cloudflare-warp/cloudflare-warp.deb /tmp/cloudflare-warp/cloudflare-warp.deb
 
 # install prerequisites and cloudflare-warp
 RUN \
     apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y ca-certificates curl libcap2 tzdata gnupg lsb-release procps && \
-    \
-    curl https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/cloudflare-client.list && \
-    apt-get update && \
-    apt-get install -y cloudflare-warp && \
+    apt-get install -y curl ca-certificates sudo procps iputils-ping inetutils-traceroute && \
+    apt install -y /tmp/cloudflare-warp/cloudflare-warp.deb && \
     \
     warp-cli --accept-tos --version && \
     syncthing --version && \
     \
     apt-get clean && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/*
 
-
-HEALTHCHECK --interval=45s --timeout=3s --start-period=20s --retries=3 \
-  CMD curl -fsS "https://cloudflare.com/cdn-cgi/trace" | grep -qE "warp=(plus|on)" || exit 1
-
+# NB: perform these COPY/RUN layers after the RUN layer above so edits/changes have short dev-build times
+COPY scripts /scripts
+COPY entrypoint.sh healthchecks.sh ./
+RUN chmod 755 /entrypoint.sh /healthchecks.sh /scripts/*.sh
 
 VOLUME ["/var/syncthing"]
-EXPOSE 8384
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
+  CMD "/healthchecks.sh"
 
-COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
