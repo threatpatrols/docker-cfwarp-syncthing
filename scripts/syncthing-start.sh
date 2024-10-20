@@ -11,8 +11,8 @@ setcap -r "${binary}" 2>/dev/null || true
 setcap "$PCAP" "${binary}" 2>/dev/null || true
 setcap "CAP_FOWNER=ep" "${binary}"
 
-groupadd --gid "${STGID}" syncgroup
-useradd --uid "${STUID}" --gid "${STGID}" --no-user-group --home-dir "${STSHARESDIR}" --no-create-home --shell "/bin/bash" syncuser
+groupadd --gid "${STGID}" syncgroup || echo "syncgroup group already exists."
+useradd --uid "${STUID}" --gid "${STGID}" --no-user-group --home-dir "${STSHARESDIR}" --no-create-home --shell "/bin/bash" syncuser || echo "syncuser user already exists."
 
 mkdir -p "${STDATADIR}" && chown syncuser:syncgroup "${STDATADIR}"
 mkdir -p "${STCONFDIR}" && chown syncuser:syncgroup "${STCONFDIR}"

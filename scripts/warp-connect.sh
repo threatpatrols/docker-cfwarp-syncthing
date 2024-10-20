@@ -34,7 +34,7 @@ fi
 sleep "${WARP_START_DELAY}"
 
 # create a user for the cfwarp-cli to run with
-useradd --uid 59000 --no-create-home --shell /bin/bash cfwarp
+useradd --uid 59000 --no-create-home --shell /bin/bash cfwarp || echo "cfwarp user already exists."
 alias warp-cli="su cfwarp warp-cli"
 
 warp-cli --version
