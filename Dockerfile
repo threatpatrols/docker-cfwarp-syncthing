@@ -42,11 +42,11 @@ COPY --from=cloudflare-warp /tmp/cloudflare-warp/cloudflare-warp.deb /tmp/cloudf
 RUN \
     apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y curl ca-certificates sudo procps iputils-ping inetutils-traceroute && \
+    apt-get install -y curl ca-certificates systemd-resolved sudo procps iputils-ping inetutils-traceroute && \
     apt install -y /tmp/cloudflare-warp/cloudflare-warp.deb && \
     \
-    warp-cli --accept-tos --version && \
-    syncthing --version && \
+    printf " >> %s\n" "$(warp-cli --accept-tos --version)" && \
+    printf " >> %s\n" "$(syncthing --version)" && \
     \
     apt-get clean && \
     apt-get autoremove -y && \
