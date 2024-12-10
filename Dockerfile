@@ -21,7 +21,7 @@ RUN \
 
 
 # https://hub.docker.com/r/syncthing/syncthing/tags
-FROM syncthing/syncthing:1.28 AS syncthing
+FROM syncthing/syncthing:1.28.1 AS syncthing
 
 RUN \
    /bin/syncthing --version

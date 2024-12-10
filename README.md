@@ -13,8 +13,7 @@ services:
     hostname: example01
     container_name: syncthing-example01
 
-    # required for Cloudflare WARP
-    privileged: true
+    privileged: true  # required for Cloudflare WARP
 
     ports:
       # Make >>VERY<< sure this binding is via 127.0.0.1 as shown else you will expose the Syncthing GUI interface 
@@ -39,7 +38,7 @@ docker run --rm -it --privileged -p 127.0.0.1:8384:8384 threatpatrols/cfwarp-syn
 ```
 
 ### Notes
-- Recent cloudflare warp versions (2024.11.309.0) apper to require use of the `--privileged` flag to open the `tun` interface, would prefer an explicit approach.
+- Recent cloudflare warp versions (2024.11.309.0) now requires the use of the `--privileged` flag to handle the `tun` interface, would much prefer an explicit approach.
 - This sample `docker-compose.yml` should be modified to suit your situation, in particular the `/some/local/path` mount. 
 - The container requires root privileges to enable the creation of a tunnel-interface (`/dev/net/tun`) required for Cloudflare WARP to bind to.
 - The container does not confirm to the do-one-thing doctrine since it starts both a Cloudflare WARP daemon and a Syncthing process, this is managed using a HEALTHCHECK to test for health of the Cloudflare WARP tunnel with an `exit 1` if down; together with loop that checks for the existence of `syncthing` that terminates when missing.
