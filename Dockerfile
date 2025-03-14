@@ -30,9 +30,10 @@ RUN \
 # https://hub.docker.com/_/debian/tags
 FROM debian:stable-slim
 
-# Hello
-LABEL maintainer="Nicholas de Jong <ndejong@threatpatrols.com>"
-LABEL source="https://github.com/threatpatrols/docker-cfwarp-syncthing"
+# OCI Labels
+LABEL org.opencontainers.image.title="Docker Syncthing on CFWarp"
+LABEL org.opencontainers.image.authors="Nicholas de Jong <ndejong@threatpatrols.com>"
+LABEL org.opencontainers.image.source="https://github.com/threatpatrols/docker-cfwarp-syncthing"
 
 # copy-install syncthing binary
 COPY --from=syncthing /bin/syncthing /usr/local/bin/syncthing
